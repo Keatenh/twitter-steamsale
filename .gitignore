@@ -1,0 +1,18 @@
+
+# environment
+.env
+
+#images
+*.jpg
+*.jpeg
+*.png
+
+#deps 
+node_modules
+
+# tests
+lib-cov
+coverage
+
+# transpiled files
+build

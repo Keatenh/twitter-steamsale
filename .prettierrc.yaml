@@ -1,0 +1,5 @@
+tabWidth: 2
+arrowParens: "always"
+overrides:
+- files: "*.yaml"
+  bracketSpacing: false
