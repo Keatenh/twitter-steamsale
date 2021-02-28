@@ -59,22 +59,34 @@ const main = async () => {
       } else {
         status = `${game} is NOT currently on sale on Steam - Regular price: ${curPrice} USD`;
       }
-      T.post("statuses/update", { status }, (err: TwitError, _data, _resp) => {
-        if (err) {
-          /* 
-          If the app restarts, it will have no state/diff and may send a duplicate status.
-          Ignore crashing on this error, as it may cause a loop of attempts.
-          */
-          if (err.message !== "Status is a duplicate." && err?.code !== 187) {
-            throw new Error(`Error in Twitter post: " + ${err.message}`);
+      // Don't post status for 1st data gathering (startup)
+      if (upTime !== 0) {
+        T.post(
+          "statuses/update",
+          { status },
+          (err: TwitError, _data, _resp) => {
+            if (err) {
+              /* 
+              If the app restarts, it will have no state/diff and may send a duplicate status.
+              Ignore crashing on this error, as it may cause a loop of attempts.
+              */
+              if (
+                err.message !== "Status is a duplicate." &&
+                err?.code !== 187
+              ) {
+                throw new Error(`Error in Twitter post: " + ${err.message}`);
+              }
+              console.log("Error - Attempted to send duplicate status!");
+            } else {
+              console.log("Done - Successfully posted sale Tweet.");
+            }
           }
-          console.log("Error - Attempted to send duplicate status!");
-        } else {
-          console.log("Done - Successfully posted sale Tweet.");
-        }
-      });
+        );
+      } else {
+        console.log("Done - Successfully gathered data for 1st attempt.")
+      }
     } else {
-      console.log("Done - No change in game data found this attempt.")
+      console.log("Done - No change in game data found this attempt.");
     }
   } catch (e) {
     console.log(e.message);
@@ -82,10 +94,14 @@ const main = async () => {
   }
 };
 
+// Initialization
+main();
+
+// Scheduled Runs
 const job = new CronJob(
   "0 13 * * * *",
   () => {
-    upTime++
+    upTime++;
     console.log(`Starting hourly job #${upTime}...`);
     try {
       if (upTime > maxUpTime) {
