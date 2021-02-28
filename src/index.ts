@@ -9,6 +9,8 @@ import { SteamResp, TwitError } from "./models";
 const T = new Twit(config.twitOps);
 const steamApp = config.steamOpts.appID;
 let salePercent = -1; //state we are tracking after startup
+const maxUpTime = 8; //number of hours / day we will allow process to run.
+let upTime = 0;
 
 const main = async () => {
   try {
@@ -83,10 +85,15 @@ const main = async () => {
 const job = new CronJob(
   "0 13 * * * *",
   () => {
-    console.log("Starting hourly job...");
+    upTime++
+    console.log(`Starting hourly job #${upTime}...`);
     try {
+      if (upTime > maxUpTime) {
+        console.log(`Done with work for the day - Exiting...`);
+        process.exit(0);
+      }
       main();
-      console.log("Completed hourly job.");
+      console.log(`Completed hourly job #${upTime}.`);
     } catch (e) {
       console.log("Error completing job!");
       throw e;
