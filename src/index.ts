@@ -11,6 +11,7 @@ const steamApp = config.steamOpts.appID;
 let salePercent = -1; //state we are tracking after startup
 const maxUpTime = 8; //number of hours / day we will allow process to run.
 let upTime = 0;
+let lastStatus: string | undefined;
 
 const main = async () => {
   try {
@@ -47,9 +48,7 @@ const main = async () => {
     const curPrice =
       steamResp.data[steamApp].data?.price_overview?.final_formatted;
     /*  
-    If this value has changed:
-      - store new value
-      - post an update tweet
+    If this value has changed, store new value
     */
     if (game && curSale && curPrice && curSale !== salePercent) {
       salePercent = curSale;
@@ -59,17 +58,37 @@ const main = async () => {
       } else {
         status = `${game} is NOT currently on sale on Steam - Regular price: ${curPrice} USD`;
       }
-      // Don't post status for 1st data gathering (startup)
-      if (upTime !== 0) {
+
+      if (upTime === 0) {
+        // On Startup
+        try {
+          const lastResp = await T.get("statuses/user_timeline", {
+            user_id: config.appOpts.twitUserID,
+            include_rts: false,
+            count: 1,
+          });
+          const lastTweet  = lastResp.data as Twit.Twitter.Status[];
+          lastStatus = lastTweet[0].text;
+        } catch (e) {
+          throw new Error(`Error fetching last tweet: ${e.message}`);
+        }
+      }
+      /* 
+      If we have something new to post:
+      1.) Changed since we started node process (already in salePercent branch)
+      OR 
+      2.) New status message since we last ran job (where salePercent is assumed impossible value)
+      */
+      if (upTime > 0 || (lastStatus && status !== lastStatus)) {
         T.post(
           "statuses/update",
           { status },
           (err: TwitError, _data, _resp) => {
             if (err) {
-              /* 
-              If the app restarts, it will have no state/diff and may send a duplicate status.
-              Ignore crashing on this error, as it may cause a loop of attempts.
-              */
+              /*
+                If the app restarts, it will have no state/diff and may send a duplicate status.
+                Ignore crashing on this error, as it may cause a loop of attempts.
+                */
               if (
                 err.message !== "Status is a duplicate." &&
                 err?.code !== 187
@@ -82,8 +101,6 @@ const main = async () => {
             }
           }
         );
-      } else {
-        console.log("Done - Successfully gathered data for 1st attempt.")
       }
     } else {
       console.log("Done - No change in game data found this attempt.");

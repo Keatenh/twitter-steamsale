@@ -13,6 +13,7 @@ node_modules
 # tests
 lib-cov
 coverage
+local
 
 # transpiled files
 build

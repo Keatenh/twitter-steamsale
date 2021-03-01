@@ -6,6 +6,7 @@ const env = load({
   TWITTER_CONSUMER_SECRET: String,
   TWITTER_ACCESS_TOKEN: String,
   TWITTER_ACCESS_TOKEN_SECRET: String,
+  TWITTER_USER_ID: String, // value of number too large
   STEAM_APP_ID: Number,
 });
 
@@ -19,7 +20,11 @@ const twitOps: Options = {
 };
 
 const steamOpts = {
-  appID: env.STEAM_APP_ID
-}
+  appID: env.STEAM_APP_ID,
+};
 
-export default {twitOps, steamOpts};
+const appOpts = {
+  twitUserID: env.TWITTER_USER_ID,
+};
+
+export default { twitOps, steamOpts, appOpts };
