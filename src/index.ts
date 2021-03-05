@@ -50,7 +50,12 @@ const main = async () => {
     /*  
     If this value has changed, store new value
     */
-    if (game && curSale && curPrice && curSale !== salePercent) {
+    if (
+      game &&
+      typeof curSale !== "undefined" &&
+      curPrice &&
+      curSale !== salePercent
+    ) {
       salePercent = curSale;
       let status = "";
       if (curSale > 0) {
@@ -67,7 +72,7 @@ const main = async () => {
             include_rts: false,
             count: 1,
           });
-          const lastTweet  = lastResp.data as Twit.Twitter.Status[];
+          const lastTweet = lastResp.data as Twit.Twitter.Status[];
           lastStatus = lastTweet[0].text;
         } catch (e) {
           throw new Error(`Error fetching last tweet: ${e.message}`);
